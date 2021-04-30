@@ -32,6 +32,13 @@ const colors = [
 const locations = [
     "SoCal",
     "NorCal",
+    "Michigan",
+    "Vermont",
+    "Florida",
+    "Virginia",
+    "Washington",
+    "Arizona",
+    "Ontario, Canada",
 ];
 
 const lookupRoles = async (whitelist: string[]) => {
