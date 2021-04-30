@@ -54,7 +54,7 @@ client.on('ready', async () => {
     const colorRoles = await lookupColorRoles();
     console.log(colorRoles);
 
-    await getApp(guildId).commands.post({
+    await addCommand({
         data: {
             name: 'add_role',
             description: 'Adds a role for the color of your car',
@@ -68,7 +68,7 @@ client.on('ready', async () => {
         }
     });
 
-    await getApp(guildId).commands.post({
+    await addCommand({
         data: {
             name: 'remove_role',
             description: 'Removes a role for the color of your car',
@@ -166,8 +166,5 @@ const alterRole = async (
         }
     });
 }
-
-
-
 
 client.login(process.env.TOKEN);
