@@ -21,24 +21,62 @@ const colors = [
     "Lapis Blue Pearl",
     "Dark Grey Metallic",
     "Crystal Black Silica",
-    "Platinum Silver Metallic"
+    "Platinum Silver Metallic",
+    "Satin White Pearl",
 ];
 
-const lookupRoles = async () => {
+const locations = [
+    "SoCal",
+    "NorCal",
+];
+
+const lookupRoles = async (whitelist: string[]) => {
     const roleCache = client.guilds.cache.get(guildId)?.roles.cache;
-    return colors
-        .map(color => roleCache?.find(role => role.name === color))
+    return whitelist
+        .map(whitelistedRoleName => roleCache?.find(role => role.name === whitelistedRoleName))
         .filter(role => role !== undefined)
         .map(role => {
             return { name: role?.name, value: role?.name }
         });
 };
 
+const lookupColorRoles = () => lookupRoles(colors);
+
+const lookupLocationRoles = () => lookupRoles(locations);
+
+const alterRole = async (
+    guild: DiscordJS.Guild | undefined,
+    member: DiscordJS.GuildMember | undefined,
+    interaction: { id: any; token: any; },
+    roleName: string,
+    add: boolean,
+) => {
+    const role = guild?.roles.cache.find(role => role.name === roleName)!;
+
+    let message;
+    if (add) {
+        message = `Added role ${role.name}!`;
+        await member?.roles.add(role);
+    } else {
+        message = `Removed role ${role.name}!`;
+        await member?.roles.remove(role);
+    }
+
+    (<any>client['api']).interactions(interaction.id, interaction.token).callback.post({
+        data: {
+            type: 4,
+            data: {
+                content: message,
+            }
+        }
+    });
+}
+
 client.on('ready', async () => {
     console.log('Ready');
 
-    const roles = await lookupRoles();
-    console.log(roles);
+    const colorRoles = await lookupColorRoles();
+    console.log(colorRoles);
 
     await getApp(guildId).commands.post({
         data: {
@@ -49,7 +87,7 @@ client.on('ready', async () => {
                 description: "The color of your vehicle",
                 type: 3,
                 required: true,
-                choices: roles
+                choices: colorRoles
             }]
         }
     });
@@ -63,7 +101,38 @@ client.on('ready', async () => {
                 description: "The color of your vehicle",
                 type: 3,
                 required: true,
-                choices: roles
+                choices: colorRoles
+            }]
+        }
+    });
+
+    const locationRoles = await lookupLocationRoles();
+    console.log(locationRoles);
+
+    await getApp(guildId).commands.post({
+        data: {
+            name: 'add_location',
+            description: 'Adds a role for your location',
+            options: [{
+                name: "location",
+                description: "Your location",
+                type: 3,
+                required: true,
+                choices: locationRoles
+            }]
+        }
+    });
+
+    await getApp(guildId).commands.post({
+        data: {
+            name: 'remove_location',
+            description: 'Removes your location role',
+            options: [{
+                name: "location",
+                description: "Your location",
+                type: 3,
+                required: true,
+                choices: locationRoles
             }]
         }
     });
@@ -75,33 +144,21 @@ client.on('ready', async () => {
         const members = await guild?.members.fetch();
         const member = members?.get(user.id);
 
-        if (command === "add_role") {
-            const role = guild?.roles.cache.find(role => role.name === interaction.data.options[0].value)!;
+        const addRoleCommnands = [
+            "add_role",
+            "add_location",
+        ]
 
-            await member?.roles.add(role);
+        const removeRoleCommnands = [
+            "remove_role",
+            "remove_location",
+        ]
 
-            (<any>client['api']).interactions(interaction.id, interaction.token).callback.post({
-                data: {
-                    type: 4,
-                    data: {
-                        content: `Added role ${role.name}!`
-                    }
-                }
-            });
+        if (addRoleCommnands.indexOf(command) !== -1) {
+            alterRole(guild, member, interaction, interaction.data.options[0].value, true);
         }
-        else if (command === "remove_role") {
-            const role = guild?.roles.cache.find(role => role.name === interaction.data.options[0].value)!;
-
-            await member?.roles.remove(role);
-
-            (<any>client['api']).interactions(interaction.id, interaction.token).callback.post({
-                data: {
-                    type: 4,
-                    data: {
-                        content: `Removed role ${role.name}!`
-                    }
-                }
-            });
+        else if (removeRoleCommnands.indexOf(command) !== -1) {
+            alterRole(guild, member, interaction, interaction.data.options[0].value, false);
         }
     });
 });
