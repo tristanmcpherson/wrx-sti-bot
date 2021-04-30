@@ -13,6 +13,10 @@ const getApp = (guildId: string) => {
     return (<any>client['api']).applications(client.user?.id).guilds(guildId);
 };
 
+const addCommand = async (command: any) => {
+    getApp(guildId).commands.post(command);
+};
+
 const colors = [
     "Ice Silver Metallic",
     "World Rally Blue",
@@ -43,34 +47,6 @@ const lookupRoles = async (whitelist: string[]) => {
 const lookupColorRoles = () => lookupRoles(colors);
 
 const lookupLocationRoles = () => lookupRoles(locations);
-
-const alterRole = async (
-    guild: DiscordJS.Guild | undefined,
-    member: DiscordJS.GuildMember | undefined,
-    interaction: { id: any; token: any; },
-    roleName: string,
-    add: boolean,
-) => {
-    const role = guild?.roles.cache.find(role => role.name === roleName)!;
-
-    let message;
-    if (add) {
-        message = `Added role ${role.name}!`;
-        await member?.roles.add(role);
-    } else {
-        message = `Removed role ${role.name}!`;
-        await member?.roles.remove(role);
-    }
-
-    (<any>client['api']).interactions(interaction.id, interaction.token).callback.post({
-        data: {
-            type: 4,
-            data: {
-                content: message,
-            }
-        }
-    });
-}
 
 client.on('ready', async () => {
     console.log('Ready');
@@ -109,7 +85,7 @@ client.on('ready', async () => {
     const locationRoles = await lookupLocationRoles();
     console.log(locationRoles);
 
-    await getApp(guildId).commands.post({
+    await addCommand({
         data: {
             name: 'add_location',
             description: 'Adds a role for your location',
@@ -123,7 +99,7 @@ client.on('ready', async () => {
         }
     });
 
-    await getApp(guildId).commands.post({
+    await addCommand({
         data: {
             name: 'remove_location',
             description: 'Removes your location role',
@@ -136,32 +112,62 @@ client.on('ready', async () => {
             }]
         }
     });
+});
 
-    client.ws.on('INTERACTION_CREATE' as DiscordJS.WSEventType, async (interaction) => {
-        const command = interaction.data.name.toLowerCase();
-        const user = await client.users.fetch(interaction.member.user.id);
-        const guild = client.guilds.cache.get(guildId);
-        const members = await guild?.members.fetch();
-        const member = members?.get(user.id);
+client.ws.on('INTERACTION_CREATE' as DiscordJS.WSEventType, async (interaction) => {
+    const command = interaction.data.name.toLowerCase();
+    const user = await client.users.fetch(interaction.member.user.id);
+    const guild = client.guilds.cache.get(guildId);
+    const members = await guild?.members.fetch();
+    const member = members?.get(user.id);
 
-        const addRoleCommnands = [
-            "add_role",
-            "add_location",
-        ]
+    const addRoleCommands = [
+        "add_role",
+        "add_location",
+    ]
 
-        const removeRoleCommnands = [
-            "remove_role",
-            "remove_location",
-        ]
+    const removeRoleCommands = [
+        "remove_role",
+        "remove_location",
+    ]
 
-        if (addRoleCommnands.indexOf(command) !== -1) {
-            alterRole(guild, member, interaction, interaction.data.options[0].value, true);
-        }
-        else if (removeRoleCommnands.indexOf(command) !== -1) {
-            alterRole(guild, member, interaction, interaction.data.options[0].value, false);
+    if (addRoleCommands.includes(command)) {
+        alterRole(guild, member, interaction, interaction.data.options[0].value, true);
+    }
+    else if (removeRoleCommands.includes(command)) {
+        alterRole(guild, member, interaction, interaction.data.options[0].value, false);
+    }
+});
+
+const alterRole = async (
+    guild: DiscordJS.Guild | undefined,
+    member: DiscordJS.GuildMember | undefined,
+    interaction: { id: any; token: any; },
+    roleName: string,
+    add: boolean,
+) => {
+    const role = guild?.roles.cache.find(role => role.name === roleName)!;
+
+    let message;
+    if (add) {
+        message = `Added role ${role.name}!`;
+        await member?.roles.add(role);
+    } else {
+        message = `Removed role ${role.name}!`;
+        await member?.roles.remove(role);
+    }
+
+    (<any>client['api']).interactions(interaction.id, interaction.token).callback.post({
+        data: {
+            type: 4,
+            data: {
+                content: message,
+            }
         }
     });
-});
+}
+
+
 
 
 client.login(process.env.TOKEN);
