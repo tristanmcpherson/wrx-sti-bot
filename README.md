@@ -1,4 +1,9 @@
 # wrx-sti-bot
 boop
 
-npm install
+`npm install`
+and 
+`npm run`
+to run
+
+or just `npm build` to build
