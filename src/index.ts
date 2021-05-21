@@ -141,7 +141,7 @@ client.on('interaction', async (interaction: Interaction) => {
         return;
     }
 
-    command.processor(interaction, command);
+    await command.processor(interaction, command);
 });
 
 async function FuckOffCommand(interaction: CommandInteraction, command: Command<{}>) {
