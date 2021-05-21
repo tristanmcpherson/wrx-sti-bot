@@ -107,32 +107,50 @@ client.on('ready', async () => {
             choices: locationRoles
         }]
     });
+
+    await addCommand({
+        name: 'fuckoff',
+        description: 'Fuck off'
+    });
 });
 
-interface RoleCommand {
+interface Command<T> {
     command: string,
+    processor: (interaction: CommandInteraction, command: Command<T>) => Promise<void>
+    data: T
+}
+
+interface RoleCommandData {
     roleAlteration: RoleAlteration
 }
 
-const CommandLookup: RoleCommand[] = [
-    { command: "add_role", roleAlteration: "add" },
-    { command: "add_location", roleAlteration: "add" },
-    { command: "remove_role", roleAlteration: "remove" },
-    { command: "remove_location", roleAlteration: "remove" }
+const CommandLookup: Command<any>[] = [
+    { command: "add_role", processor: RoleCommand, data: { roleAlteration: "add" }},
+    { command: "add_location", processor: RoleCommand, data: { roleAlteration: "add" }},
+    { command: "remove_role", processor: RoleCommand, data: {roleAlteration: "remove" }},
+    { command: "remove_location", processor: RoleCommand, data: {roleAlteration: "remove" }},
+    { command: "fuckoff", processor: FuckOffCommand, data: {}}
 ];
 
 client.on('interaction', async (interaction: Interaction) => {
     if (!interaction.isCommand()) { return; }
 
     const command = CommandLookup.find(lookup => lookup.command == interaction.commandName.toLowerCase());
-
     if (!command) {
-        console.log(`Cannot handle interaction of command: ${command}`);
+        console.log(`Cannot find command of name: ${interaction.commandName.toLowerCase()}`)
         return;
     }
 
-    await alterRole(interaction, interaction.options[0].value as string, command.roleAlteration);
+    command.processor(interaction, command);
 });
+
+async function FuckOffCommand(interaction: CommandInteraction, command: Command<{}>) {
+    await interaction.reply("Fuck off.");
+}
+
+async function RoleCommand(interaction: CommandInteraction, command: Command<RoleCommandData>) {
+    await alterRole(interaction, interaction.options[0].value as string, command.data.roleAlteration);
+}
 
 type RoleAlteration = "add" | "remove";
 
