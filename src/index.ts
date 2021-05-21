@@ -1,5 +1,7 @@
 import { Intents, Client, ApplicationCommandData, ApplicationCommandOptionChoice, Guild, GuildMember, CommandInteraction, RoleManager, GuildMemberRoleManager, Role, Interaction } from "discord.js";
 import * as dotenv from "dotenv";
+import { FuckOffCommand } from "./fuckOffCommand";
+import { RoleCommand } from "./roleCommand";
 dotenv.config();
 
 const guildId = '808035465437511680';
@@ -47,6 +49,14 @@ const lookupRoles = async (whitelist: string[]) => {
             return { name: role?.name, value: role?.name } as ApplicationCommandOptionChoice
         });
 };
+
+const CommandLookup: Command<any>[] = [
+    { command: "add_role", processor: RoleCommand, data: { roleAlteration: "add" }},
+    { command: "add_location", processor: RoleCommand, data: { roleAlteration: "add" }},
+    { command: "remove_role", processor: RoleCommand, data: {roleAlteration: "remove" }},
+    { command: "remove_location", processor: RoleCommand, data: {roleAlteration: "remove" }},
+    { command: "fuckoff", processor: FuckOffCommand, data: {}}
+];
 
 const lookupColorRoles = () => lookupRoles(colors);
 const lookupLocationRoles = () => lookupRoles(locations);
@@ -114,23 +124,12 @@ client.on('ready', async () => {
     });
 });
 
-interface Command<T> {
+export interface Command<T> {
     command: string,
     processor: (interaction: CommandInteraction, command: Command<T>) => Promise<void>
     data: T
 }
 
-interface RoleCommandData {
-    roleAlteration: RoleAlteration
-}
-
-const CommandLookup: Command<any>[] = [
-    { command: "add_role", processor: RoleCommand, data: { roleAlteration: "add" }},
-    { command: "add_location", processor: RoleCommand, data: { roleAlteration: "add" }},
-    { command: "remove_role", processor: RoleCommand, data: {roleAlteration: "remove" }},
-    { command: "remove_location", processor: RoleCommand, data: {roleAlteration: "remove" }},
-    { command: "fuckoff", processor: FuckOffCommand, data: {}}
-];
 
 client.on('interaction', async (interaction: Interaction) => {
     if (!interaction.isCommand()) { return; }
@@ -143,43 +142,5 @@ client.on('interaction', async (interaction: Interaction) => {
 
     await command.processor(interaction, command);
 });
-
-async function FuckOffCommand(interaction: CommandInteraction, command: Command<{}>) {
-    await interaction.reply("Fuck off.");
-}
-
-async function RoleCommand(interaction: CommandInteraction, command: Command<RoleCommandData>) {
-    await alterRole(interaction, interaction.options[0].value as string, command.data.roleAlteration);
-}
-
-type RoleAlteration = "add" | "remove";
-
-interface RoleAlterationMetadata {
-    message: string,
-    action: () => Promise<GuildMember>
-}
-
-const alterRole = async (
-    interaction: CommandInteraction,
-    roleName: string,
-    interactionType: RoleAlteration
-) => {
-
-    const role = interaction.guild?.roles.cache.find((role: Role) => role.name === roleName);
-
-    if (!role) { return; }
-
-    const roleManager = interaction.member!.roles as GuildMemberRoleManager;
-
-    const roleActionLookup: [RoleAlteration, RoleAlterationMetadata][] = [
-        ["add", { message: `Added role ${role.name}!`, action: () => roleManager.add(role) }], 
-        ["remove", { message: `Removed role ${role.name}!`, action: () => roleManager.remove(role) }]
-    ];
-
-    const roleActionMetadata = roleActionLookup.find(rl => rl[0] === interactionType)![1];
-
-    await roleActionMetadata!.action();
-    await interaction.reply(roleActionMetadata!.message);
-}
 
 client.login(process.env.TOKEN);
