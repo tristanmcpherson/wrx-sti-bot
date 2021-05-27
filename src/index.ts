@@ -124,6 +124,11 @@ client.on('ready', async () => {
         name: 'fuckoff',
         description: 'Fuck off'
     });
+
+    await addCommand({
+        name: 'muhrumble',
+        description: 'Muh rumble'
+    });
 });
 
 export interface Command<T> {
