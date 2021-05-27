@@ -1,6 +1,7 @@
 import { Intents, Client, ApplicationCommandData, ApplicationCommandOptionChoice, Guild, GuildMember, CommandInteraction, RoleManager, GuildMemberRoleManager, Role, Interaction } from "discord.js";
 import * as dotenv from "dotenv";
 import { FuckOffCommand } from "./fuckOffCommand";
+import { MuhrumbleCommand } from "./muhrumbleCommand";
 import { RoleCommand } from "./roleCommand";
 dotenv.config();
 
@@ -55,7 +56,8 @@ const CommandLookup: Command<any>[] = [
     { command: "add_location", processor: RoleCommand, data: { roleAlteration: "add" }},
     { command: "remove_role", processor: RoleCommand, data: {roleAlteration: "remove" }},
     { command: "remove_location", processor: RoleCommand, data: {roleAlteration: "remove" }},
-    { command: "fuckoff", processor: FuckOffCommand, data: {}}
+    { command: "fuckoff", processor: FuckOffCommand, data: {}},
+    { command: "muhrumble", processor: MuhrumbleCommand, data: {}}
 ];
 
 const lookupColorRoles = () => lookupRoles(colors);
