@@ -4,12 +4,11 @@ import { Command, ICommand } from "../models/commandManager";
 
 @provide(Command)
 class MuhrumbleCommand implements ICommand {
-    name = 'muhrumble';
     async getCommandData(): Promise<ApplicationCommandData> { 
-        return {
-            name: this.name,
+        return Promise.resolve({
+            name: 'muhrumble',
             description: 'Muh rumble'
-        };
+        });
     }
 
     async handler(interaction: CommandInteraction) {

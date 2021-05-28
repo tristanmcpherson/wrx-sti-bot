@@ -19,12 +19,11 @@ const colors = [
 
 @provide(Command)
 class AddColorRoleCommand implements ICommand {
-    name = 'add_role';
     async getCommandData(): Promise<ApplicationCommandData> {
-        const colorRoles = await lookupRoles(colors);
+        const colorRoles = lookupRoles(colors);
 
-        return {
-            name: this.name,
+        return Promise.resolve({
+            name: 'add_role',
             description: 'Adds a role for the color of your car',
             options: [{
                 name: "color",
@@ -33,7 +32,7 @@ class AddColorRoleCommand implements ICommand {
                 required: true,
                 choices: colorRoles
             }]
-        };
+        });
     }
 
     async handler(interaction: CommandInteraction) {
@@ -43,13 +42,12 @@ class AddColorRoleCommand implements ICommand {
 
 @provide(Command)
 class RemoveColorRoleCommand implements ICommand {
-    name = 'remove_role';
     async getCommandData(): Promise<ApplicationCommandData> {
-        const colorRoles = await lookupRoles(colors);
+        const colorRoles = lookupRoles(colors);
         console.log(colorRoles);
 
-        return {
-            name: this.name,
+        return Promise.resolve({
+            name: 'remove_role',
             description: 'Removes a role for your location',
             options: [{
                 name: "location",
@@ -58,7 +56,7 @@ class RemoveColorRoleCommand implements ICommand {
                 required: true,
                 choices: colorRoles
             }]
-        };
+        });
     }
 
     async handler(interaction: CommandInteraction) {

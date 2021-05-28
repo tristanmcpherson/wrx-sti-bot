@@ -3,7 +3,7 @@ import { provide } from 'inversify-binding-decorators';
 import { lookupRoles } from "..";
 import { ICommand, Command } from '../models/commandManager';
 import { alterRole } from '../utils/roleCommandBase';
-                
+
 const locations = [
     "SoCal",
     "NorCal",
@@ -35,7 +35,7 @@ export class AddLocationCommand implements ICommand {
         };
     }
 
-    async handler(interaction: CommandInteraction) {
+    async handler(interaction: CommandInteraction): Promise<void> {
         await alterRole(interaction, interaction.options[0].value as string, "add");
     }
 }
@@ -60,7 +60,7 @@ export class RemoveLocationCommand implements ICommand {
         };
     }
 
-    async handler(interaction: CommandInteraction) {
+    async handler(interaction: CommandInteraction): Promise<void> {
         await alterRole(interaction, interaction.options[0].value as string, "remove");
     }
 }

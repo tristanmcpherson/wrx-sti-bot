@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import "reflect-metadata";
 import { Intents, Client, ApplicationCommandOptionChoice, Interaction } from "discord.js";
 import * as dotenv from "dotenv";
-import { CommandManager } from './models/commandManager';
-import container from "./inversify.config";
+import { CommandManager } from './models/commandManager.js';
+import container from "./inversify.config.js";
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ container.bind("guildId").toConstantValue(guildId);
 
 const globalCommandManager = container.resolve(CommandManager);
 
-export const lookupRoles = async (whitelist: string[]): Promise<ApplicationCommandOptionChoice[]> => {
+export const lookupRoles = (whitelist: string[]): ApplicationCommandOptionChoice[] => {
     const roleCache = client.guilds.cache.get(guildId)?.roles.cache;
     return whitelist
         .map(whitelistedRoleName => roleCache?.find(role => role.name === whitelistedRoleName))
@@ -29,7 +30,7 @@ export const lookupRoles = async (whitelist: string[]): Promise<ApplicationComma
 };
 
 client.on('ready', async () => {
-    console.log('Ready');
+    console.log('Ready')
 
     await globalCommandManager.registerCommands();
     console.log("Registered all commands.");
@@ -41,4 +42,4 @@ client.on('interaction', async (interaction: Interaction) => {
     await globalCommandManager.handleCommand(interaction, interaction.commandName);
 });
 
-client.login(process.env.TOKEN);
+void client.login(process.env.TOKEN);

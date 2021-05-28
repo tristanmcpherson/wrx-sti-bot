@@ -4,7 +4,6 @@ import { inject, injectable, multiInject } from "inversify";
 export const Command = Symbol("Command");
 
 export interface ICommand {
-    name: string;
     getCommandData: () => Promise<ApplicationCommandData>;
     handler: (interaction: CommandInteraction) => Promise<void>;
 }
@@ -22,7 +21,7 @@ export class CommandManager {
         this._commands = commands;
     }
 
-    registerCommands = async () => {
+    registerCommands = async (): Promise<void> => {
         const addCommand = (command: ApplicationCommandData) => {
             if (this._guildId) {
                 return this._client.guilds.cache.get(this._guildId)?.commands.create(command);
@@ -32,12 +31,15 @@ export class CommandManager {
         };
 
         console.log(`Registering ${this._commands.length} commands.`);
-        const commandData = await Promise.all(this._commands.map(c => c.getCommandData()));
-        await Promise.all(commandData.map(addCommand));
+        await Promise.all(this._commands.map(async command => {
+            const commandData = await command.getCommandData()
+            await addCommand(commandData);
+            this._commandMap.set(commandData.name, command);
+        }));
     }
 
-    handleCommand = async (commandInteraction: CommandInteraction, commandName: string) => {
-        const command = this._commands.find(command => command.name === commandName)
+    handleCommand = async (commandInteraction: CommandInteraction, commandName: string): Promise<void> => {
+        const command = this._commandMap.get(commandName);
         if (command) {
             return command.handler(commandInteraction);
         }

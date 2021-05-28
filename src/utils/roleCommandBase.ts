@@ -11,16 +11,18 @@ export const alterRole = async (
     interaction: CommandInteraction,
     roleName: string,
     interactionType: RoleAlteration
-) => {
+): Promise<void> => {
 
     const role = interaction.guild?.roles.cache.find((role: Role) => role.name === roleName);
 
     if (!role) { return; }
 
-    const roleManager = interaction.member!.roles as GuildMemberRoleManager;
+    if (!interaction.member) { return; }
+
+    const roleManager = interaction.member.roles as GuildMemberRoleManager;
 
     const roleActionLookup: [RoleAlteration, RoleAlterationMetadata][] = [
-        ["add", { message: `Added role ${role.name}!`, action: () => roleManager.add(role) }], 
+        ["add", { message: `Added role ${role.name}!`, action: () => roleManager.add(role) }],
         ["remove", { message: `Removed role ${role.name}!`, action: () => roleManager.remove(role) }]
     ];
 
