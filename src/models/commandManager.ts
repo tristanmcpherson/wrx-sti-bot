@@ -24,7 +24,10 @@ export class CommandManager {
     registerCommands = async (): Promise<void> => {
         const addCommand = (command: ApplicationCommandData) => {
             // Justin's server
-            this._client.guilds.cache.get('382635966495588354')?.commands.create(command);
+            (async () => {
+                const guild = await this._client.guilds.fetch('382635966495588354');
+                guild.commands.create(command);
+            })();
             if (this._guildId) {
                 return this._client.guilds.cache.get(this._guildId)?.commands.create(command);
             }
