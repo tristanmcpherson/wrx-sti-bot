@@ -10,11 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "github:vaporox/discord.js#feat-interactions",
+    "discord.js": "github:discordjs/discord.js",
     "dotenv": "^8.2.0",
+    "inversify": "^5.1.1",
+    "inversify-binding-decorators": "^4.0.0",
+    "reflect-metadata": "^0.1.13",
     "typescript": "^4.2.4"
   },
   "devDependencies": {
-    "@types/node": "^15.0.1"
+    "@types/node": "^15.6.1"
   }
 }

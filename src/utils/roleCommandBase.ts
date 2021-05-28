@@ -1,13 +1,4 @@
-import { CommandInteraction, GuildMember, GuildMemberRoleManager, Role } from 'discord.js';
-import { Command } from ".";
-
-interface RoleCommandData {
-    roleAlteration: RoleAlteration
-}
-
-export async function RoleCommand(interaction: CommandInteraction, command: Command<RoleCommandData>) {
-    await alterRole(interaction, interaction.options[0].value as string, command.data.roleAlteration);
-}
+import { GuildMember, CommandInteraction, Role, GuildMemberRoleManager } from "discord.js";
 
 type RoleAlteration = "add" | "remove";
 
@@ -16,7 +7,7 @@ interface RoleAlterationMetadata {
     action: () => Promise<GuildMember>
 }
 
-const alterRole = async (
+export const alterRole = async (
     interaction: CommandInteraction,
     roleName: string,
     interactionType: RoleAlteration
