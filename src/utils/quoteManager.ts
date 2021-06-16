@@ -119,6 +119,11 @@ class QuoteManager {
 
         return quotes[quoteIndex];
     }
+
+    async getQuoteCount(): Promise<number> {
+        const quotes = await this.load();
+        return quotes.length;
+    }
 }
 
 export default new QuoteManager();

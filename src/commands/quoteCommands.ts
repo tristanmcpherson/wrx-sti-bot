@@ -183,3 +183,20 @@ class GetQuoteCommand implements ICommand {
         await interaction.reply(quoteToString(quote));
     }
 }
+
+
+@provide(Command)
+class QuoteCountCommand implements ICommand {
+    async getCommandData(): Promise<ApplicationCommandData> {
+        return {
+            name: 'degen_quote_count',
+            description: 'Gets the number of degen quotes',
+            options: [],
+        };
+    }
+
+    async handler(interaction: CommandInteraction, client: Client) {
+        const quoteCount = await quoteManager.getQuoteCount();
+        await interaction.reply(`There are currently ${quoteCount} quotes.`);
+    }
+}
