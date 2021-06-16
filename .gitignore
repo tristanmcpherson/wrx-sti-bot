@@ -102,3 +102,4 @@ tests/cases/user/prettier/prettier
 tsconfig.tsbuildinfo
 dist/
 .metals/
+quotes.json

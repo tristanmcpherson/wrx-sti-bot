@@ -5,7 +5,7 @@ export const Command = Symbol("Command");
 
 export interface ICommand {
     getCommandData: () => Promise<ApplicationCommandData>;
-    handler: (interaction: CommandInteraction) => Promise<void>;
+    handler: (interaction: CommandInteraction, client: Client) => Promise<void>;
 }
 
 @injectable()
@@ -47,7 +47,7 @@ export class CommandManager {
     handleCommand = async (commandInteraction: CommandInteraction, commandName: string): Promise<void> => {
         const command = this._commandMap.get(commandName);
         if (command) {
-            return command.handler(commandInteraction);
+            return command.handler(commandInteraction, this._client);
         }
     }
 }
