@@ -1,4 +1,4 @@
-import { ApplicationCommandData, CommandInteraction, Client, TextChannel, User } from "discord.js";
+import { ApplicationCommandData, CommandInteraction, Client, TextChannel, User, Message } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { Command, ICommand } from "../models/commandManager";
 import quoteManager, { Author, Quote } from "../utils/quoteManager";
@@ -40,10 +40,15 @@ class AddDegenQuoteCommand implements ICommand {
             name: 'add_degen_quote',
             description: 'Adds a new degen quote',
             options: [{
-                name: "message_ids",
-                description: "Comma-separated IDs of the messages to quote",
+                name: "first_message_id",
+                description: "ID of first message to include in the quote",
                 type: "STRING",
                 required: true,
+            }, {
+                name: "last_message_id",
+                description: "ID of last message to include in the quote",
+                type: "STRING",
+                required: false,
             }, {
                 name: "channel_id",
                 description: "ID of the channel, if different from current channel",
@@ -54,10 +59,11 @@ class AddDegenQuoteCommand implements ICommand {
     }
 
     async handler(interaction: CommandInteraction, client: Client) {
-        const messageIds = (interaction.options[0].value as string).split(',');
+        const firstMessageId = (interaction.options[0].value as string);
+
         let channel;
-        if (interaction.options.length > 1 && interaction.options[1].value) {
-            const channelId = interaction.options[1].value as string;
+        if (interaction.options.length > 2 && interaction.options[2].value) {
+            const channelId = interaction.options[2].value as string;
             try {
                 channel = await client.channels.fetch(channelId) as TextChannel;
             } catch (e) {
@@ -67,17 +73,37 @@ class AddDegenQuoteCommand implements ICommand {
         } else {
             channel = await client.channels.fetch(interaction.channel!.id) as TextChannel;
         }
-        const messages = [];
-        for (let i = 0; i < messageIds.length; i++) {
-            const messageId = messageIds[i];
-            try {
-                const message = await channel.messages.fetch(messageId);
-                messages.push(message);
-            } catch (e) {
-                await interaction.reply(`Couldn't find a message with ID ${messageId} (#${i + 1} in your list).`)
-                return;
+
+        let messagesAfterFirst: Message[] = []
+        if (interaction.options.length > 1 && interaction.options[1].value) {
+            const lastMessageId = interaction.options[1].value as string;
+            if (lastMessageId !== firstMessageId) {
+                try {
+                    const messageCollection = await channel.messages.fetch({ after: firstMessageId });
+                    messagesAfterFirst = messageCollection.array();
+                    messagesAfterFirst.reverse();
+                    const indexOfLastMessage = messagesAfterFirst.findIndex(message => message.id == lastMessageId);
+                    if (indexOfLastMessage === -1) {
+                        await interaction.reply(`Couldn't find a message with that last_message_id ${lastMessageId}.`)
+                        return;
+                    }
+                    messagesAfterFirst = messagesAfterFirst.slice(0, indexOfLastMessage + 1);
+                } catch (e) {
+                    await interaction.reply(`Couldn't find messages between ${firstMessageId} and ${lastMessageId}.`)
+                    return;
+                }
             }
         }
+
+        let messages;
+        try {
+            const firstMessage = await channel.messages.fetch(firstMessageId);
+            messages = [firstMessage, ...messagesAfterFirst];
+        } catch (e) {
+            await interaction.reply(`Couldn't find a message with ID ${firstMessageId}.`)
+            return;
+        }
+
         const firstMessage = messages[0];
         const content = messages.reduce((prevContent, message) => {
             return prevContent += `${prevContent.length > 0 ? '\n' : ''}${message.content}`;
