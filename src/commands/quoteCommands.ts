@@ -1,11 +1,37 @@
 import { ApplicationCommandData, CommandInteraction, Client, TextChannel, User } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { Command, ICommand } from "../models/commandManager";
-import quoteManager, { Quote } from "../utils/quoteManager";
+import quoteManager, { Author, Quote } from "../utils/quoteManager";
 
 
-const quoteToString = (quote: Quote): string =>
-    `"${quote.content}" - ${quote.authors.map(({ username }) => username).join(', ')}, ${(new Date(quote.createdAt)).getFullYear()} (#${quote.id})`;
+const constructAuthorMap = (authors: Author[]): { [id: string]: Author } => {
+    return authors.reduce((authorMap, author) => {
+        if (author.id in authorMap) {
+            return authorMap;
+        }
+        return {
+            ...authorMap,
+            [author.id]: author,
+        };
+    }, {})
+}
+
+const quoteToString = (quote: Quote): string => {
+    const year = (new Date(quote.createdAt)).getFullYear();
+    const authors = quote.authors.map(({ username }) => username).join(', ');
+    let quoteContent;
+
+    if (quote.authors.length > 1) {
+        const authorMap = constructAuthorMap(quote.authors);
+        quoteContent = quote.messages.reduce((content, message) => {
+            return content + `${authorMap[message.authorId].username}: "${message.content}"\n`
+        }, '') + '\n';
+    } else {
+        quoteContent = `"${quote.messages.map(message => message.content).join('\n')}" `;
+    }
+
+    return `Degen Quote #${quote.id}\n\n` + quoteContent + `- ${authors} (${year})`;
+}
 
 @provide(Command)
 class AddDegenQuoteCommand implements ICommand {
@@ -56,26 +82,21 @@ class AddDegenQuoteCommand implements ICommand {
         const content = messages.reduce((prevContent, message) => {
             return prevContent += `${prevContent.length > 0 ? '\n' : ''}${message.content}`;
         }, '')
-        const authorMap: { [id: string]: User } = messages.reduce((authorMap, message) => {
-            if (message.author.id in authorMap) {
-                return authorMap;
-            }
-            return {
-                ...authorMap,
-                [message.author.id]: message.author,
-            };
-        }, {});
+        const authorMap = constructAuthorMap(messages.map(message => message.author));
         const quote = await quoteManager.save({
             guildId: firstMessage.guild!.id,
             channelId: firstMessage.channel.id,
+            messages: messages.map(({ author: { id: authorId }, content, id }) => ({
+                id,
+                content,
+                authorId,
+            })),
             authors: Object.entries(authorMap).map(([authorId, author]) => ({
                 id: author.id,
                 username: author.username,
                 discriminator: author.discriminator,
             })),
-            content,
             createdAt: firstMessage.createdAt.getTime(),
-            messageIds,
         });
         await interaction.reply(quoteToString(quote));
     }

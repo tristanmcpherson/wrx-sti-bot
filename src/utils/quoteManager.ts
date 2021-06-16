@@ -1,16 +1,20 @@
 import JsonFileManager from "./jsonFileManager"
 
+export type Author = {
+    id: string,
+    username: string,
+    discriminator: string,
+}
 type QuoteData = {
     guildId: string,
     channelId: string,
-    authors: {
+    messages: {
         id: string,
-        username: string,
-        discriminator: string,
+        content: string,
+        authorId: string,
     }[],
-    content: string,
+    authors: Author[],
     createdAt: number,
-    messageIds: string[],
 };
 export type Quote = {
     id: number,
@@ -18,10 +22,12 @@ export type Quote = {
 
 type QuotesDb = {
     quotes: Quotes,
+    version: number,
 };
 
 const defaultQuotesDb = {
     quotes: [],
+    version: 2,
 };
 
 export type Quotes = Quote[];
@@ -58,7 +64,11 @@ class QuoteManager {
     }
 
     async _loadQuotesDb(): Promise<QuotesDb> {
-        const quotesDb = await this.fileManager.load();
+        let quotesDb = await this.fileManager.load();
+        if (quotesDb.version !== defaultQuotesDb.version) {
+            await this.fileManager.renameOldFile(`quotes.${quotesDb.version || 1}`);
+            quotesDb = await this.fileManager.load();
+        }
         if (quotesDb.quotes.length > 0) {
             this.latestQuoteId = quotesDb.quotes[quotesDb.quotes.length - 1].id;
         }

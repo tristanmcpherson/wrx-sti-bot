@@ -103,3 +103,4 @@ tsconfig.tsbuildinfo
 dist/
 .metals/
 quotes.json
+quotes.*.json

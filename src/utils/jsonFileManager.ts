@@ -4,13 +4,26 @@ const AsyncLock = require('async-lock');
 
 const lock = new AsyncLock();
 
+const pathFromName = (name: string): string => `./${name}.json`;
+
 export default class JsonFileManager<T extends Object> {
   path: string;
   defaultValue: T;
 
   constructor(name: string, defaultValue: T) {
-    this.path = `./${name}.json`;
+    this.path = pathFromName(name);
     this.defaultValue = defaultValue;
+  }
+
+  async renameOldFile(newName: string) {
+    await lock.acquire(this.path, async () => {
+      const newPath = pathFromName(newName);
+      try {
+        await fs.rename(this.path, newPath);
+      } catch (err) {
+          throw new Error(`Could not rename file at ${this.path} to ${newPath}: ${err.toString()}`);
+      }
+    });
   }
 
   async load(): Promise<T> {
