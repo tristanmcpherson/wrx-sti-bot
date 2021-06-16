@@ -1,11 +1,11 @@
-import { ApplicationCommandData, CommandInteraction, Client, TextChannel } from "discord.js";
+import { ApplicationCommandData, CommandInteraction, Client, TextChannel, User } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { Command, ICommand } from "../models/commandManager";
 import quoteManager, { Quote } from "../utils/quoteManager";
 
 
 const quoteToString = (quote: Quote): string =>
-    `"${quote.content}" - ${quote.author.username}, ${(new Date(quote.createdAt)).getFullYear()} (#${quote.id})`;
+    `"${quote.content}" - ${quote.authors.map(({ username }) => username).join(', ')}, ${(new Date(quote.createdAt)).getFullYear()} (#${quote.id})`;
 
 @provide(Command)
 class AddDegenQuoteCommand implements ICommand {
@@ -14,34 +14,68 @@ class AddDegenQuoteCommand implements ICommand {
             name: 'add_degen_quote',
             description: 'Adds a new degen quote',
             options: [{
-                name: "message_id",
-                description: "The ID of the message to quote",
+                name: "message_ids",
+                description: "Comma-separated IDs of the messages to quote",
                 type: "STRING",
                 required: true,
+            }, {
+                name: "channel_id",
+                description: "ID of the channel, if different from current channel",
+                type: "STRING",
+                required: false,
             }],
         };
     }
 
     async handler(interaction: CommandInteraction, client: Client) {
-        const messageId = interaction.options[0].value as string;
-        const channel = await client.channels.fetch(interaction.channel!.id) as TextChannel;
-        let message;
-        try {
-            message = await channel.messages.fetch(messageId);
-        } catch (e) {
-            await interaction.reply(`Couldn't find a message with that ID.`)
-            return;
+        const messageIds = (interaction.options[0].value as string).split(',');
+        let channel;
+        if (interaction.options.length > 1 && interaction.options[1].value) {
+            const channelId = interaction.options[1].value as string;
+            try {
+                channel = await client.channels.fetch(channelId) as TextChannel;
+            } catch (e) {
+                await interaction.reply(`Couldn't find a channel with ID ${channelId}.`)
+                return;
+            }
+        } else {
+            channel = await client.channels.fetch(interaction.channel!.id) as TextChannel;
         }
+        const messages = [];
+        for (let i = 0; i < messageIds.length; i++) {
+            const messageId = messageIds[i];
+            try {
+                const message = await channel.messages.fetch(messageId);
+                messages.push(message);
+            } catch (e) {
+                await interaction.reply(`Couldn't find a message with ID ${messageId} (#${i + 1} in your list).`)
+                return;
+            }
+        }
+        const firstMessage = messages[0];
+        const content = messages.reduce((prevContent, message) => {
+            return prevContent += `${prevContent.length > 0 ? '\n' : ''}${message.content}`;
+        }, '')
+        const authorMap: { [id: string]: User } = messages.reduce((authorMap, message) => {
+            if (message.author.id in authorMap) {
+                return authorMap;
+            }
+            return {
+                ...authorMap,
+                [message.author.id]: message.author,
+            };
+        }, {});
         const quote = await quoteManager.save({
-            guildId: message.guild!.id,
-            channelId: message.channel.id,
-            author: {
-                id: message.author.id,
-                username: message.author.username,
-                discriminator: message.author.discriminator,
-            },
-            content: message.content,
-            createdAt: message.createdAt.getTime(),
+            guildId: firstMessage.guild!.id,
+            channelId: firstMessage.channel.id,
+            authors: Object.entries(authorMap).map(([authorId, author]) => ({
+                id: author.id,
+                username: author.username,
+                discriminator: author.discriminator,
+            })),
+            content,
+            createdAt: firstMessage.createdAt.getTime(),
+            messageIds,
         });
         await interaction.reply(quoteToString(quote));
     }

@@ -3,13 +3,14 @@ import JsonFileManager from "./jsonFileManager"
 type QuoteData = {
     guildId: string,
     channelId: string,
-    author: {
+    authors: {
         id: string,
         username: string,
         discriminator: string,
-    },
+    }[],
     content: string,
     createdAt: number,
+    messageIds: string[],
 };
 export type Quote = {
     id: number,
