@@ -16,7 +16,7 @@ export default class JsonFileManager<T extends Object> {
   async load(): Promise<T> {
     return await lock.acquire(this.path, async () => {
       try {
-        const body = await fs.readFile(this.path);
+        const body = await fs.readFile('.' + this.path);
         return JSON.parse(body);
       } catch (err) {
         if (err.code !== 'ENOENT') {
