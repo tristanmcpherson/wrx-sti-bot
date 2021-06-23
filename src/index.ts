@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import "reflect-metadata";
-import { Intents, Client, ApplicationCommandOptionChoice, Interaction } from "discord.js";
+import { Intents, Client, ApplicationCommandOptionChoice, Interaction, Message } from "discord.js";
 import * as dotenv from "dotenv";
 import { CommandManager } from './models/commandManager.js';
+import { MessageManager } from "./models/messageManager.js";
 import container from "./inversify.config.js";
 
 dotenv.config();
@@ -18,6 +19,7 @@ container.bind(Client).toConstantValue(client);
 container.bind("guildId").toConstantValue(guildId);
 
 const globalCommandManager = container.resolve(CommandManager);
+const globalMessageManager = container.resolve(MessageManager);
 
 export const lookupRoles = (whitelist: string[]): ApplicationCommandOptionChoice[] => {
     const roleCache = client.guilds.cache.get(guildId)?.roles.cache;
@@ -34,6 +36,10 @@ client.on('ready', async () => {
 
     await globalCommandManager.registerCommands();
     console.log("Registered all commands.");
+});
+
+client.on('message', async (message: Message) => {
+    await globalMessageManager.handleMessage(message);
 });
 
 client.on('interaction', async (interaction: Interaction) => {
