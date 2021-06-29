@@ -3,7 +3,7 @@ import { provide } from "inversify-binding-decorators";
 import { IMessageHandler, MessageHandler } from "../models/messageManager";
 
 @provide(MessageHandler)
-class FiveTenHandler implements IMessageHandler {
+class LeftTheChatHandler implements IMessageHandler {
     async shouldHandle(message: Message, client: Client): Promise<boolean> {
         return message.author.id !== client.user!.id && message.content.includes('just left the server');
     }
