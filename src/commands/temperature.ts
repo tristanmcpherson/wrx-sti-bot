@@ -2,7 +2,7 @@ import { Client, Message } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { IMessageHandler, MessageHandler } from "../models/messageManager";
 
-const temperatureRegex = /(\d+) ?(f|c)([^a-zA-Z0-9]|$)/i;
+const temperatureRegex = /(\d+(\.\d+)?) ?(f|c)([^a-zA-Z0-9]|$)/i;
 
 @provide(MessageHandler)
 class TemperatureHandler implements IMessageHandler {
@@ -17,7 +17,7 @@ class TemperatureHandler implements IMessageHandler {
         }
 
         const value = parseFloat(regexResult[1]);
-        const unit = regexResult[2].toUpperCase();
+        const unit = regexResult[3].toUpperCase();
 
         let newValue, newUnit;
         if (unit === 'F') {
