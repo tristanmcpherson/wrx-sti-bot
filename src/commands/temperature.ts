@@ -2,7 +2,7 @@ import { Client, Message } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { IMessageHandler, MessageHandler } from "../models/messageManager";
 
-const temperatureRegex = /(\d+) ?(f|c)/i;
+const temperatureRegex = /(\d+) ?(f|c)([^a-zA-Z0-9]|$)/i;
 
 @provide(MessageHandler)
 class TemperatureHandler implements IMessageHandler {
