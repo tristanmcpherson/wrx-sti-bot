@@ -4,11 +4,12 @@ import { Intents, Client, ApplicationCommandOptionChoice, Interaction, Message }
 import * as dotenv from "dotenv";
 import { CommandManager } from './models/commandManager.js';
 import { MessageManager } from "./models/messageManager.js";
+import { HydrationManager } from "./models/hydrationManager.js";
 import container from "./inversify.config.js";
 
 dotenv.config();
 
-const guildId = '808035465437511680';
+const guildId = '156286263173840896';
 //const guildId = '445677648220258325';
 
 const intents = new Intents(Intents.NON_PRIVILEGED);
@@ -36,6 +37,8 @@ client.on('ready', async () => {
 
     await globalCommandManager.registerCommands();
     console.log("Registered all commands.");
+
+    const hydrationManager = new HydrationManager(client, '808488532511424542', '859899174485229570');
 });
 
 client.on('message', async (message: Message) => {
