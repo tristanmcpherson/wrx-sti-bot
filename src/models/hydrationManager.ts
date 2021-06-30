@@ -18,7 +18,7 @@ export class HydrationManager {
         const hour = new Date().getHours();
         if (hour >= 16 || hour < 4) {
             const channel = await this._client.channels.fetch(this._channelId) as TextChannel;
-            await channel.send(`@<&${this._roleId}> drink water u retards`)
+            await channel.send(`<@&${this._roleId}> drink water u retards`)
         }
     }
 }
