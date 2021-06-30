@@ -5,7 +5,7 @@ import { IMessageHandler, MessageHandler } from "../models/messageManager";
 @provide(MessageHandler)
 class LeftTheChatHandler implements IMessageHandler {
     async shouldHandle(message: Message, client: Client): Promise<boolean> {
-        return message.author.id !== client.user!.id && message.content.includes('just left the server');
+        return message.author.id == '159985870458322944' && message.content.includes('just left the server');
     }
 
     async handler(message: Message) {
