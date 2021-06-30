@@ -9,8 +9,7 @@ import container from "./inversify.config.js";
 
 dotenv.config();
 
-const guildId = '156286263173840896';
-//const guildId = '445677648220258325';
+const guildId = '445677648220258325';
 
 const intents = new Intents(Intents.NON_PRIVILEGED);
 intents.add('GUILD_MEMBERS');
