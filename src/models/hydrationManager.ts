@@ -11,7 +11,7 @@ export class HydrationManager {
         this._roleId = roleId;
 
         this.hydrate();
-        setInterval(this.hydrate, 60 * 60 * 1000);
+        setInterval(this.hydrate.bind(this), 60 * 60 * 1000);
     }
 
     async hydrate() {

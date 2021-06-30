@@ -14,7 +14,7 @@ const colors = [
     "Crystal Black Silica",
     "Platinum Silver Metallic",
     "Satin White Pearl",
-    "Plasma Blue Pearl"
+    "Plasma Blue Pearl",
 ];
 
 @provide(Command)
