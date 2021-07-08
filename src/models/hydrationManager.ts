@@ -10,8 +10,14 @@ export class HydrationManager {
         this._channelId = channelId;
         this._roleId = roleId;
 
-        this.hydrate();
-        setInterval(this.hydrate.bind(this), 60 * 60 * 1000);
+        const now = new Date();
+        const msUntilNextHour = (60 - now.getMinutes()) * 60 * 1000;
+        setTimeout(() => {
+            this.hydrate();
+
+            const hourInMs = 60 * 60 * 1000;
+            setInterval(this.hydrate.bind(this), hourInMs);
+        }, msUntilNextHour);
     }
 
     async hydrate() {
