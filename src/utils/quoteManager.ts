@@ -179,7 +179,7 @@ class QuoteManager {
             return null;
         }
 
-        const quote = quotes[this.currentShuffledQuoteIndex];
+        const quote = quotes[this.shuffledQuoteIndices[this.currentShuffledQuoteIndex]];
 
         this._advanceShuffledQuoteIndex(quotes.length);
 
