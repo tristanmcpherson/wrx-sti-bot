@@ -128,6 +128,46 @@ class AddDegenQuoteCommand implements ICommand {
     }
 }
 
+@provide(Command)
+class RemoveDegenQuoteCommand implements ICommand {
+    async getCommandData(): Promise<ApplicationCommandData> {
+        return {
+            name: 'remove_degen_quote',
+            description: 'Removes a degen quote',
+            options: [{
+                name: "quote_id",
+                description: "The ID of the quote",
+                type: "STRING",
+                required: true,
+            }],
+        };
+    }
+
+    moderatorOnly(): boolean {
+        return true;
+    }
+
+    async handler(interaction: CommandInteraction, client: Client) {
+        let quoteId = null;
+        try {
+            quoteId = parseInt(interaction.options[0].value as string, 10);
+        } catch (e) {
+            await interaction.reply(`Invalid quote ID`);
+            return;
+        }
+
+        const quote = await quoteManager.getQuote(quoteId);
+        if (!quote) {
+            await interaction.reply(`Quote ${quoteId} doesn't exist`);
+            return;
+        }
+
+        await quoteManager.remove(quoteId);
+
+        await interaction.reply(`REMOVED ` + quoteToString(quote));
+    }
+}
+
 
 @provide(Command)
 class RandomDegenQuoteCommand implements ICommand {

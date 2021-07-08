@@ -1,10 +1,10 @@
-import JsonFileManager from "./jsonFileManager"
+import JsonFileManager from "./jsonFileManager";
 
 export type Author = {
     id: string,
     username: string,
     discriminator: string,
-}
+};
 type QuoteData = {
     guildId: string,
     channelId: string,
@@ -23,16 +23,18 @@ export type Quote = {
 type QuotesDb = {
     quotes: Quotes,
     version: number,
+    cleanStart: boolean,
 };
 
 const defaultQuotesDb = {
     quotes: [],
-    version: 2,
+    version: 3,
+    cleanStart: false,
 };
 
 export type Quotes = Quote[];
 
-const getRandomArbitrary = (min: number, max: number) => Math.random() * (max - min) + min;
+const getRandomArbitrary = (min: number, max: number) => Math.floor(Math.random() * (max - min) + min);
 
 const shuffle = <T>(array: T[]): T[] => {
     const newArray = [...array];
@@ -45,10 +47,9 @@ const shuffle = <T>(array: T[]): T[] => {
     return newArray;
 };
 
-const quoteIdToIndex = (quoteId: number): number => quoteId - 1;
-
 class QuoteManager {
     fileManager: JsonFileManager<QuotesDb>;
+    removedQuotesFileManager: JsonFileManager<QuotesDb>;
     latestQuoteId: number = 0;
     shuffledQuoteIndices: number[] = [];
     currentShuffledQuoteIndex: number = 0;
@@ -56,18 +57,43 @@ class QuoteManager {
 
     constructor() {
         this.fileManager = new JsonFileManager("quotes", defaultQuotesDb)
+        this.removedQuotesFileManager = new JsonFileManager("removedQuotes", defaultQuotesDb);
     }
 
     _populateShuffledQuoteIndices(quotes: Quote[]) {
-        this.shuffledQuoteIndices = shuffle(quotes.map(quote => quoteIdToIndex(quote.id)));
+        this.shuffledQuoteIndices = shuffle(quotes.map((quote, index) => index));
         this.hasShuffledQuoteIndices = true;
+    }
+
+    async _handleNewDbVersion(oldQuotesDb: QuotesDb, oldRemovedQuotesDb: QuotesDb): Promise<QuotesDb> {
+        await this.fileManager.renameOldFile(`quotes.${oldQuotesDb.version || 1}`);
+
+        let newQuotesDb;
+
+        if (defaultQuotesDb.cleanStart) {
+            newQuotesDb = await this.fileManager.load();
+        } else {
+            newQuotesDb = {
+                ...defaultQuotesDb,
+                quotes: [...oldQuotesDb.quotes],
+            }
+            await this.fileManager.save(newQuotesDb);
+        }
+
+        if (oldRemovedQuotesDb.version === oldQuotesDb.version) {
+            await this.removedQuotesFileManager.renameOldFile(`removedQuotes.${oldRemovedQuotesDb.version || 1}`);
+            await this.removedQuotesFileManager.load();
+        }
+        
+        return newQuotesDb;
     }
 
     async _loadQuotesDb(): Promise<QuotesDb> {
         let quotesDb = await this.fileManager.load();
+        let removedQuotesDb = await this.removedQuotesFileManager.load();
+
         if (quotesDb.version !== defaultQuotesDb.version) {
-            await this.fileManager.renameOldFile(`quotes.${quotesDb.version || 1}`);
-            quotesDb = await this.fileManager.load();
+            quotesDb = await this._handleNewDbVersion(quotesDb, removedQuotesDb);
         }
         if (quotesDb.quotes.length > 0) {
             this.latestQuoteId = quotesDb.quotes[quotesDb.quotes.length - 1].id;
@@ -75,6 +101,7 @@ class QuoteManager {
         if (!this.hasShuffledQuoteIndices) {
             this._populateShuffledQuoteIndices(quotesDb.quotes);
         }
+
         return quotesDb;
     }
 
@@ -91,8 +118,58 @@ class QuoteManager {
         this.latestQuoteId = quote.id;
         quotesDb.quotes.push(quote);
         await this.fileManager.save(quotesDb);
-        this.shuffledQuoteIndices.push(quoteIdToIndex(quote.id))
+
+        const indexToInsertAt = getRandomArbitrary(0, this.shuffledQuoteIndices.length + 1);
+        this.shuffledQuoteIndices.splice(indexToInsertAt, 0, quotesDb.quotes.length - 1);
+        if (this.currentShuffledQuoteIndex >= indexToInsertAt) {
+            this._advanceShuffledQuoteIndex(this.shuffledQuoteIndices.length);
+        }
+
         return quote;
+    }
+
+    _advanceShuffledQuoteIndex(shuffledQuotesCount: number): void {
+        this.currentShuffledQuoteIndex = (this.currentShuffledQuoteIndex + 1) % shuffledQuotesCount;
+    }
+
+    _backtrackShuffledQuoteIndex(shuffledQuotesCount: number): void {
+        this.currentShuffledQuoteIndex--;
+        if (this.currentShuffledQuoteIndex < 0) {
+            this.currentShuffledQuoteIndex = 0;
+        }
+    }
+
+    async remove(quoteId: number): Promise<Quote> {
+        const quotesDb = await this._loadQuotesDb();
+        const indexToRemove = quotesDb.quotes.findIndex(quote => quote.id === quoteId);
+
+        if (indexToRemove === -1) {
+            throw new Error(`Attempted to remove quote with id ${quoteId}, but it doesn't exist`)
+        }
+
+        const quoteToRemove = quotesDb.quotes[indexToRemove];
+        quotesDb.quotes.splice(indexToRemove, 1);
+
+        const removedIndex = indexToRemove;
+        const removedQuote = quoteToRemove;
+
+        await this.fileManager.save(quotesDb);
+
+        const indexOfRemovedQuoteIndexInShuffledQuoteIndices = this.shuffledQuoteIndices.findIndex((index) => index === removedIndex);
+        // remove index
+        this.shuffledQuoteIndices.splice(indexOfRemovedQuoteIndexInShuffledQuoteIndices, 1);
+        // decrement indices greater than index
+        this.shuffledQuoteIndices = this.shuffledQuoteIndices.map(index => index > removedIndex ? index - 1 : index);
+        // update current shuffled quote index
+        if (this.currentShuffledQuoteIndex > indexOfRemovedQuoteIndexInShuffledQuoteIndices) {
+            this.currentShuffledQuoteIndex--;
+        }
+
+        const removedQuotesDb = await this.removedQuotesFileManager.load();
+        removedQuotesDb.quotes.push(removedQuote);
+        await this.removedQuotesFileManager.save(removedQuotesDb);
+
+        return removedQuote;
     }
 
     async getRandomQuote(): Promise<Quote | null> {
@@ -104,20 +181,15 @@ class QuoteManager {
 
         const quote = quotes[this.currentShuffledQuoteIndex];
 
-        this.currentShuffledQuoteIndex = (this.currentShuffledQuoteIndex + 1) % quotes.length;
+        this._advanceShuffledQuoteIndex(quotes.length);
 
         return quote;
     }
 
     async getQuote(quoteId: number): Promise<Quote | null> {
         const quotes = await this.load();
-        const quoteIndex = quoteIdToIndex(quoteId);
-
-        if (quoteIndex < 0 || quoteIndex >= quotes.length) {
-            return null;
-        }
-
-        return quotes[quoteIndex];
+        const quote = quotes.find(quote => quote.id === quoteId) || null;
+        return quote;
     }
 
     async getQuoteCount(): Promise<number> {
