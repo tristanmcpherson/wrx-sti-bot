@@ -7,6 +7,7 @@ const fiveTenRegex = /510([^\d]|$)/;
 @provide(MessageHandler)
 class FiveTenHandler implements IMessageHandler {
     async shouldHandle(message: Message, client: Client): Promise<boolean> {
+        return false;
         return message.author.id !== client.user!.id && fiveTenRegex.test(message.content);
     }
 

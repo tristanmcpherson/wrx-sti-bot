@@ -7,6 +7,7 @@ const izziRegex = /(canyon)|(touge)/i;
 @provide(MessageHandler)
 class IzziHandler implements IMessageHandler {
     async shouldHandle(message: Message, client: Client): Promise<boolean> {
+        return false;
         return message.author.id == '172885235535577088' && izziRegex.test(message.content);
     }
 

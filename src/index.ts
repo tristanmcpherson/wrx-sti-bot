@@ -37,7 +37,7 @@ client.on('ready', async () => {
     await globalCommandManager.registerCommands();
     console.log("Registered all commands.");
 
-    const hydrationManager = new HydrationManager(client, '808488532511424542', '859899174485229570');
+    // const hydrationManager = new HydrationManager(client, '808488532511424542', '859899174485229570');
 });
 
 client.on('message', async (message: Message) => {
