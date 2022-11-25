@@ -1,9 +1,9 @@
 # wrx-sti-bot
 boop
 
-`npm install`
+`yarn install`
 and 
-`npm run`
+`yarn start`
 to run
 
-or just `npm build` to build
+or just `yarn build` to build
