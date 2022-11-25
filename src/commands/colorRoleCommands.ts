@@ -1,4 +1,4 @@
-import { ApplicationCommandData, CommandInteraction } from "discord.js";
+import { ApplicationCommandData, ApplicationCommandOptionType, CommandInteraction } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { lookupRoles } from "..";
 import { Command, ICommand } from "../models/commandManager";
@@ -36,7 +36,7 @@ class AddColorRoleCommand implements ICommand {
     }
 
     async handler(interaction: CommandInteraction) {
-        await alterRole(interaction, interaction.options[0].value as string, "add");
+        await alterRole(interaction, interaction.options.get('color')!.value as string, "add");
     }
 }
 
@@ -52,7 +52,7 @@ class RemoveColorRoleCommand implements ICommand {
             options: [{
                 name: "location",
                 description: "Your location",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: true,
                 choices: colorRoles
             }]
@@ -60,6 +60,6 @@ class RemoveColorRoleCommand implements ICommand {
     }
 
     async handler(interaction: CommandInteraction) {
-        await alterRole(interaction, interaction.options[0].value as string, "remove");
+        await alterRole(interaction, interaction.options.get("location")!.value as string, "remove");
     }
 }

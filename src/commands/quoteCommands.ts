@@ -1,4 +1,4 @@
-import { ApplicationCommandData, CommandInteraction, Client, TextChannel, User, Message } from "discord.js";
+import { ApplicationCommandData, CommandInteraction, Client, TextChannel, User, Message, ApplicationCommandOptionType } from "discord.js";
 import { provide } from "inversify-binding-decorators";
 import { Command, ICommand } from "../models/commandManager";
 import quoteManager, { Author, Quote } from "../utils/quoteManager";
@@ -42,28 +42,28 @@ class AddDegenQuoteCommand implements ICommand {
             options: [{
                 name: "first_message_id",
                 description: "ID of first message to include in the quote",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: true,
             }, {
                 name: "last_message_id",
                 description: "ID of last message to include in the quote",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: false,
             }, {
                 name: "channel_id",
                 description: "ID of the channel, if different from current channel",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: false,
             }],
         };
     }
 
     async handler(interaction: CommandInteraction, client: Client) {
-        const firstMessageId = (interaction.options[0].value as string);
+        const firstMessageId = (interaction.options.get('first_message_id', true).value as string);
 
         let channel;
-        if (interaction.options.length > 2 && interaction.options[2].value) {
-            const channelId = interaction.options[2].value as string;
+        if (interaction.options.get('channel_id')?.value) {
+            const channelId = interaction.options.get('channel_id')!.value as string;
             try {
                 channel = await client.channels.fetch(channelId) as TextChannel;
             } catch (e) {
@@ -75,12 +75,12 @@ class AddDegenQuoteCommand implements ICommand {
         }
 
         let messagesAfterFirst: Message[] = []
-        if (interaction.options.length > 1 && interaction.options[1].value) {
-            const lastMessageId = interaction.options[1].value as string;
+        if (interaction.options.get('last_message_id')?.value) {
+            const lastMessageId = interaction.options.get('last_message_id')?.value as string;
             if (lastMessageId !== firstMessageId) {
                 try {
                     const messageCollection = await channel.messages.fetch({ after: firstMessageId });
-                    messagesAfterFirst = messageCollection.array();
+                    messagesAfterFirst = messageCollection.map(i => i)
                     messagesAfterFirst.reverse();
                     const indexOfLastMessage = messagesAfterFirst.findIndex(message => message.id == lastMessageId);
                     if (indexOfLastMessage === -1) {
@@ -137,7 +137,7 @@ class RemoveDegenQuoteCommand implements ICommand {
             options: [{
                 name: "quote_id",
                 description: "The ID of the quote",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: true,
             }],
         };
@@ -150,7 +150,7 @@ class RemoveDegenQuoteCommand implements ICommand {
     async handler(interaction: CommandInteraction, client: Client) {
         let quoteId = null;
         try {
-            quoteId = parseInt(interaction.options[0].value as string, 10);
+            quoteId = parseInt(interaction.options.get('quote_id', true).value as string, 10);
         } catch (e) {
             await interaction.reply(`Invalid quote ID`);
             return;
@@ -199,7 +199,7 @@ class GetQuoteCommand implements ICommand {
             options: [{
                 name: "quote_id",
                 description: "The ID of the quote",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: true,
             }],
         };
@@ -208,7 +208,7 @@ class GetQuoteCommand implements ICommand {
     async handler(interaction: CommandInteraction, client: Client) {
         let quoteId = null;
         try {
-            quoteId = parseInt(interaction.options[0].value as string, 10);
+            quoteId = parseInt(interaction.options.get('quote_id', true).value as string, 10);
         } catch (e) {
             await interaction.reply(`Invalid quote ID`);
             return;

@@ -1,4 +1,4 @@
-import { ApplicationCommandData, Client, CommandInteraction } from "discord.js";
+import { ApplicationCommandData, Client, CommandInteraction, GuildMember } from "discord.js";
 import { inject, injectable, multiInject } from "inversify";
 import { isModerator } from "../utils/discord";
 
@@ -49,7 +49,7 @@ export class CommandManager {
     handleCommand = async (commandInteraction: CommandInteraction, commandName: string): Promise<void> => {
         const command = this._commandMap.get(commandName);
         if (command) {
-            if (command.moderatorOnly && command.moderatorOnly() && !isModerator(commandInteraction.member)) {
+            if (command.moderatorOnly && command.moderatorOnly() && !isModerator(commandInteraction.member as GuildMember)) {
                 await commandInteraction.reply('You must be a moderator to use that command.');
                 return;
             }
