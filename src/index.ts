@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import "reflect-metadata";
-import { Intents, Client, ApplicationCommandOptionChoice, Interaction, Message } from "discord.js";
+import { Client, Interaction, Message, GatewayIntentBits, ApplicationCommandOptionChoiceData } from "discord.js";
 import * as dotenv from "dotenv";
 import { CommandManager } from './models/commandManager.js';
 import { MessageManager } from "./models/messageManager.js";
@@ -11,17 +11,14 @@ dotenv.config();
 
 const guildId = '808035465437511680';
 
-const intents = new Intents(Intents.NON_PRIVILEGED);
-intents.add('GUILD_MEMBERS');
-
-const client = new Client({ intents });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers] });
 container.bind(Client).toConstantValue(client);
 container.bind("guildId").toConstantValue(guildId);
 
 const globalCommandManager = container.resolve(CommandManager);
 const globalMessageManager = container.resolve(MessageManager);
 
-export const lookupRoles = (whitelist: string[]): ApplicationCommandOptionChoice[] => {
+export const lookupRoles = (whitelist: string[]): ApplicationCommandOptionChoiceData<string>[] => {
     const roleCache = client.guilds.cache.get(guildId)?.roles.cache;
     return whitelist
         .map(whitelistedRoleName => roleCache?.find(role => role.name === whitelistedRoleName))

@@ -1,4 +1,4 @@
-import { GuildMember, Role } from "discord.js";
+import { APIInteractionGuildMember, GuildMember, Role } from "discord.js";
 
 const MODERATOR_ROLES = [
     'Moderator',
@@ -6,7 +6,7 @@ const MODERATOR_ROLES = [
 ]
 
 export const isModerator = (member: GuildMember): boolean => 
-    member
+    member && member
         .roles
         .valueOf()
         .some((role: Role) => MODERATOR_ROLES.includes(role.name));

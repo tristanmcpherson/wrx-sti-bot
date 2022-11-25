@@ -20,7 +20,7 @@ export default class JsonFileManager<T extends Object> {
       const newPath = pathFromName(newName);
       try {
         await fs.rename(this.path, newPath);
-      } catch (err) {
+      } catch (err: any) {
           throw new Error(`Could not rename file at ${this.path} to ${newPath}: ${err.toString()}`);
       }
     });
@@ -31,7 +31,7 @@ export default class JsonFileManager<T extends Object> {
       try {
         const body = await fs.readFile(this.path);
         return JSON.parse(body);
-      } catch (err) {
+      } catch (err: any) {
         if (err.code !== 'ENOENT') {
           throw new Error(`Could not read file at ${this.path}: ${err.toString()}`);
         }
@@ -40,7 +40,7 @@ export default class JsonFileManager<T extends Object> {
 
       try {
         await fs.writeFile(this.path, JSON.stringify(this.defaultValue));
-      } catch (err) {
+      } catch (err: any) {
         throw new Error(`Could not write default value to ${this.path}: ${err.toString()}`)
       }
 
@@ -52,7 +52,7 @@ export default class JsonFileManager<T extends Object> {
     return await lock.acquire(this.path, async () => {
       try {
         return await fs.writeFile(this.path, JSON.stringify(value));
-      } catch (err) {
+      } catch (err: any) {
         throw new Error(`Could not save to ${this.path}: ${err.toString()}`)
       }
     });

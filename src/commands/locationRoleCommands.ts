@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMember, GuildMemberRoleManager, Role, ApplicationCommandData } from 'discord.js';
+import { CommandInteraction, GuildMember, GuildMemberRoleManager, Role, ApplicationCommandData, ApplicationCommandOptionType } from 'discord.js';
 import { provide } from 'inversify-binding-decorators';
 import { lookupRoles } from "..";
 import { ICommand, Command } from '../models/commandManager';
@@ -28,7 +28,7 @@ export class AddLocationCommand implements ICommand {
             options: [{
                 name: "location",
                 description: "Your location",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: true,
                 choices: locationRoles
             }]
@@ -36,7 +36,7 @@ export class AddLocationCommand implements ICommand {
     }
 
     async handler(interaction: CommandInteraction): Promise<void> {
-        await alterRole(interaction, interaction.options[0].value as string, "add");
+        await alterRole(interaction, interaction.options.get('location', true).value as string, "add");
     }
 }
 
@@ -53,7 +53,7 @@ export class RemoveLocationCommand implements ICommand {
             options: [{
                 name: "location",
                 description: "Your location",
-                type: "STRING",
+                type: ApplicationCommandOptionType.String,
                 required: true,
                 choices: locationRoles
             }]
@@ -61,6 +61,6 @@ export class RemoveLocationCommand implements ICommand {
     }
 
     async handler(interaction: CommandInteraction): Promise<void> {
-        await alterRole(interaction, interaction.options[0].value as string, "remove");
+        await alterRole(interaction, interaction.options.get('location', true).value as string, "remove");
     }
 }
