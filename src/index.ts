@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 import "reflect-metadata";
-import { Client, Interaction, Message, GatewayIntentBits, ApplicationCommandOptionChoiceData } from "discord.js";
+import { Client, Message, GatewayIntentBits, ApplicationCommandOptionChoiceData, Events } from "discord.js";
 import * as dotenv from "dotenv";
 import { CommandManager } from './models/commandManager.js';
 import { MessageManager } from "./models/messageManager.js";
 import { HydrationManager } from "./models/hydrationManager.js";
 import container from "./inversify.config.js";
+import fetch from "node-fetch";
 
 dotenv.config();
 
@@ -41,7 +42,8 @@ client.on('message', async (message: Message) => {
     await globalMessageManager.handleMessage(message);
 });
 
-client.on('interaction', async (interaction: Interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
+    console.log(interaction, interaction.isChatInputCommand())
     if (!interaction.isCommand()) { return; }
 
     await globalCommandManager.handleCommand(interaction, interaction.commandName);
